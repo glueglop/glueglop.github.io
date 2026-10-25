@@ -95,9 +95,9 @@ footer p { margin: 0 0 0.4rem; max-width: 38rem; }
 
 <div class="wrap">
   <section class="intro">
-    <h1>Far Cry 1 in the browser</h1>
-    <p>trying to get Far Cry 1 running in a browser. this is where i write down what i did.</p>
-<pre class="log" aria-label="Excerpt of the engine's startup log"><span class="dim">Network initialization
+    <h1>far cry 1 in a browser</h1>
+    <p>i got jack carver to like me now</p>
+<pre class="log" aria-label="stuff taken from the startup log"><span class="dim">Network initialization
 Physics initialization
 Renderer initialization
 AI initialization
@@ -105,8 +105,8 @@ Entity system initialization
 Initializing Animation System
 Initializing 3D Engine
 Initializing Script Bindings</span>
-<span class="ok">SUCCESS! Far Cry Core Engine initialized inside WebAssembly!</span>
-Hello from Far Cry internal Lua VM running in WebAssembly!</pre>
+<span class="ok">yay! the cryengine works</span>
+lua scripting vm says hello</pre>
   </section>
 </div>
 
@@ -117,7 +117,7 @@ Hello from Far Cry internal Lua VM running in WebAssembly!</pre>
   <article class="entry" id="2026-10-25">
     <time datetime="2026-10-25">oct 25, 2026</time>
     <h2>the engine boots</h2>
-    <p>the core of the engine starts up inside one WebAssembly module now, and it sits in its main loop without crashing. Lua works too. i got it to print a hello from inside the engine.</p>
+    <p>the core of the engine starts up inside one WebAssembly module now, and it sits in its main loop without crashing. lua works too. it was polite and said hello.</p>
     <p>nothing draws yet though. i’m using the engine’s null renderer, which takes every draw call and shows nothing, so for now it only runs in node.</p>
     <p><strong>working:</strong> startup, console and file system, Lua scripts, AI, entities, animation, 3D engine init, and the main loop.</p>
     <p><strong>not yet:</strong> reading game data (every path uses backslashes), input, sound, the actual game code, and a renderer. physics, movie and networking are just switched off for now.</p>
@@ -142,9 +142,9 @@ X::X() inside a constructor    MSVC accepts a no-op, clang rejects it</pre>
   <article class="entry" id="up-next">
     <h2>what’s next</h2>
     <ul>
-      <li><strong>file paths.</strong> the engine asks for things like <code>fcdata\localized\english.pak</code> with backslashes. those need converting, and the data files have to be visible to the module.</li>
-      <li><strong>input and sound.</strong> the originals use DirectInput and FMOD, so those get SDL and either a stub or OpenAL.</li>
-      <li><strong>the game module.</strong> the biggest one still left.</li>
+      <li><strong>file paths.</strong> the engine asks for things like <code>fcdata\localized\english.pak</code> with backslashes. those need converting, and the data files have to be visible to the subsystem/module (whatever it's called).</li>
+      <li><strong>input and sound.</strong> the originals use DirectInput and FMOD, so those get SDL and a stub or OpenAL.</li>
+      <li><strong>the game module.</strong> the bad boy that's really hard to make</li>
       <li><strong>a real renderer.</strong> the original OpenGL path leans on NVIDIA-only extensions that WebGL doesn’t have, so this means writing a new WebGL backend.</li>
     </ul>
   </article>
@@ -153,7 +153,7 @@ X::X() inside a constructor    MSVC accepts a no-op, clang rejects it</pre>
 
 <footer>
   <div class="wrap">
-    <p>unofficial fan project, not affiliated with Crytek or Ubisoft. no game files are hosted here.</p>
+    <p>unofficial project, not affiliated with Crytek or Ubisoft. no game files are hosted here.</p>
     <p>built on the source tree from <a href="https://github.com/ugozapad/FarCry">ugozapad/FarCry</a>.</p>
   </div>
 </footer>
