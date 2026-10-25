@@ -144,7 +144,7 @@ X::X() inside a constructor    MSVC accepts a no-op, clang rejects it</pre>
     <ul>
       <li><strong>file paths.</strong> the engine asks for things like <code>fcdata\localized\english.pak</code> with backslashes. those need converting, and the data files have to be visible to the subsystem/module (whatever it's called).</li>
       <li><strong>input and sound.</strong> the originals use DirectInput and FMOD, so those get SDL and a stub or OpenAL.</li>
-      <li><strong>the game module.</strong> the bad boy that's really hard to make</li>
+      <li><strong>CryGame</strong> the actual game, combines all these modules together</li>
       <li><strong>a real renderer.</strong> the original OpenGL path leans on NVIDIA-only extensions that WebGL doesn’t have, so this means writing a new WebGL backend.</li>
     </ul>
   </article>
