@@ -41,8 +41,20 @@ a:focus-visible, summary:focus-visible { outline: 3px solid #f7b733; outline-off
   border: 1px solid #7fae35; border-radius: 0.6rem;
   padding: 0 0.45rem; position: relative; top: -0.5rem;
 }
+.bar nav { display: flex; align-items: center; gap: 1.1rem; }
 .bar nav a { color: #fff; font-weight: 600; text-decoration: none; text-shadow: 0 1px 2px rgba(10,40,80,0.45); }
 .bar nav a:hover { text-decoration: underline; }
+.bar nav a.nav-btn {
+  font-weight: 800; font-size: 0.95rem; text-decoration: none;
+  padding: 0.35rem 0.95rem; border-radius: 0.5rem;
+  background: linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0) 52%), linear-gradient(#97d340, #5d981b);
+  border: 1px solid var(--lime-dark);
+  text-shadow: 0 1px 1px rgba(30,60,0,0.5);
+  box-shadow: 0 1px 2px rgba(30,60,0,0.3), inset 0 1px 0 rgba(255,255,255,0.45);
+}
+.bar nav a.nav-btn:hover { text-decoration: none; filter: brightness(1.06); }
+.bar nav a.nav-btn:active { box-shadow: inset 0 2px 3px rgba(30,60,0,0.35); }
+.bar nav a.nav-btn[aria-current="page"] { filter: brightness(0.95); }
 
 .intro { padding: 2.5rem 0 1.25rem; }
 .intro h1 { font-size: clamp(1.9rem, 5vw, 2.75rem); line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 0.6rem; }
@@ -86,10 +98,10 @@ footer p { margin: 0 0 0.4rem; max-width: 38rem; }
 <header class="bar">
   <div class="wrap">
     <div class="brand">
-      <a class="logo" href="../">glueglop</a>
+      <a class="logo" href="../index.html">glueglop</a>
       <span class="beta">beta</span>
     </div>
-    <nav aria-label="Main"><a href="../">all projects</a></nav>
+    <nav aria-label="Main"><a href="../index.html">all projects</a><a class="nav-btn" href="../contact/index.html">contact</a></nav>
   </div>
 </header>
 
