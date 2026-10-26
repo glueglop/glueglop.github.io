@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gluestation devlog - glueglop</title>
+<meta name="description" content="Devlog for gluestation, a PS1 emulator written in Rust. It boots the BIOS and plays the startup chime (badly).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sky: #2f86d6; --sky-dark: #1d5f9f; --page: #eaf3fb; --ink: #213244;
+  --muted: #587086; --line: #c7d8e8; --lime: #88c433; --lime-dark: #5d981b;
+  --font: "Nunito", "Trebuchet MS", Verdana, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--font); font-size: 1.0625rem; line-height: 1.55; }
+a { color: var(--sky-dark); text-underline-offset: 3px; }
+a:focus-visible { outline: 3px solid #f7b733; outline-offset: 3px; }
+.wrap { max-width: 52rem; margin: 0 auto; padding: 0 1.25rem; }
+
+.bar {
+  background: linear-gradient(rgba(255,255,255,0.38), rgba(255,255,255,0) 52%), linear-gradient(#4aa2ec, #1f6fba);
+  border-bottom: 1px solid var(--sky-dark); box-shadow: 0 2px 6px rgba(20,60,100,0.25);
+}
+.bar .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 4rem; }
+.logo { display: flex; align-items: center; gap: 0.6rem; color: #fff; text-decoration: none; font-weight: 800; font-size: 1.75rem; letter-spacing: -0.01em; text-shadow: 0 1px 2px rgba(10,40,80,0.45); }
+.brand { display: flex; align-items: center; gap: 0.4rem; }
+.beta { font-size: 0.7rem; font-weight: 800; color: #3d5a0e; background: linear-gradient(#d3ef9e, #a7d65a); border: 1px solid #7fae35; border-radius: 0.6rem; padding: 0 0.45rem; position: relative; top: -0.5rem; }
+.bar nav { display: flex; align-items: center; gap: 1.1rem; }
+.bar nav a { color: #fff; font-weight: 600; text-decoration: none; text-shadow: 0 1px 2px rgba(10,40,80,0.45); }
+.bar nav a:hover { text-decoration: underline; }
+.bar nav a.nav-btn {
+  font-weight: 800; font-size: 0.95rem; text-decoration: none; padding: 0.35rem 0.95rem; border-radius: 0.5rem;
+  background: linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0) 52%), linear-gradient(#97d340, #5d981b);
+  border: 1px solid var(--lime-dark); text-shadow: 0 1px 1px rgba(30,60,0,0.5);
+  box-shadow: 0 1px 2px rgba(30,60,0,0.3), inset 0 1px 0 rgba(255,255,255,0.45);
+}
+.bar nav a.nav-btn:hover { text-decoration: none; filter: brightness(1.06); }
+
+.intro { padding: 2.5rem 0 1rem; }
+.intro h1 { font-size: clamp(1.9rem, 5vw, 2.75rem); line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 0.6rem; }
+.intro p { margin: 0 0 0.6rem; max-width: 38rem; color: var(--muted); font-size: 1.15rem; }
+.crumb { font-size: 0.9rem; margin-bottom: 0.8rem; }
+.intro p.meta { font-size: 0.95rem; }
+
+.pill { display: inline-block; font-size: 0.8rem; font-weight: 600; padding: 0.1rem 0.65rem; border-radius: 1rem; border: 1px solid; background: #eef8dc; color: #4a7a13; border-color: #b7da7d; margin-bottom: 0.9rem; }
+
+.card { background: #fff; border: 1px solid var(--line); border-radius: 0.7rem; padding: 1.25rem 1.4rem; box-shadow: 0 1px 0 #fff inset, 0 2px 5px rgba(40,80,120,0.12); margin: 0 0 1.25rem; }
+.card h2 { margin: 0 0 0.6rem; font-size: 1.3rem; line-height: 1.2; font-weight: 800; }
+.card h3 { margin: 1.1rem 0 0.3rem; font-size: 1.05rem; font-weight: 800; }
+.card p { margin: 0 0 0.8rem; }
+.card p:last-child { margin-bottom: 0; }
+.card ul { margin: 0 0 0.8rem; padding-left: 1.25rem; }
+.card li { margin-bottom: 0.35rem; }
+code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; background: #eef3f8; border: 1px solid #dde7f0; border-radius: 0.3rem; padding: 0 0.3rem; }
+
+.status { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem; }
+.status .card { margin: 0; }
+.ok h2::before { content: "works  "; font-size: 0.75rem; color: #4a7a13; background: #eef8dc; border: 1px solid #b7da7d; border-radius: 1rem; padding: 0.1rem 0.6rem; vertical-align: middle; margin-right: 0.4rem; }
+.todo h2::before { content: "not yet  "; font-size: 0.75rem; color: #7a5a13; background: #fff3d1; border: 1px solid #e6cf85; border-radius: 1rem; padding: 0.1rem 0.6rem; vertical-align: middle; margin-right: 0.4rem; }
+
+.player { background: #f5f9fd; border: 1px solid var(--line); border-radius: 0.6rem; padding: 0.8rem 1rem; margin: 0.4rem 0 0.9rem; }
+.player strong { display: block; margin-bottom: 0.4rem; font-size: 0.95rem; }
+.player audio { width: 100%; }
+
+.date { color: var(--muted); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.2rem; }
+figure { margin: 0 0 1.1rem; }
+figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 0.5rem; background: #000; }
+figcaption { color: var(--muted); font-size: 0.92rem; margin-top: 0.4rem; }
+
+footer { border-top: 1px solid var(--line); padding: 1.25rem 0 2.5rem; color: var(--muted); font-size: 0.9rem; }
+footer p { margin: 0 0 0.4rem; max-width: 38rem; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="brand">
+      <a class="logo" href="../index.html">glueglop</a>
+      <span class="beta">beta</span>
+    </div>
+    <nav aria-label="Main"><a href="../index.html#projects">projects</a><a class="nav-btn" href="../contact/index.html">contact</a></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <div class="crumb"><a href="../index.html#projects">&larr; all projects</a></div>
+    <span class="pill">in progress</span>
+    <h1>gluestation devlog</h1>
+    <p>a playstation 1 emulator in rust. it boots the bios, draws to vram, and plays the startup chime. the chime sounds like a midi file running on a broken sound card, so that's the current boss fight.</p>
+    <p class="meta">last updated october 26, 2026 &middot; <a href="https://github.com/glueglop/gluestation">source code on github</a></p>
+  </section>
+
+  <section class="status" aria-label="Status">
+    <div class="card ok">
+      <h2>so far</h2>
+      <ul>
+        <li>mips r3000a cpu, delay slots and all</li>
+        <li>bios boots from the reset vector</li>
+        <li>gpu rasterizer drawing into 1024x512 vram</li>
+        <li>gte (the 3d math coprocessor)</li>
+        <li>dma, timers, interrupts</li>
+        <li>spu with adpcm voices, real audio out</li>
+      </ul>
+    </div>
+    <div class="card todo">
+      <h2>later</h2>
+      <ul>
+        <li>fixing the audio (see below, it's bad)</li>
+        <li>cd-rom: right now it pretends there's no disc</li>
+        <li>controllers / memory cards</li>
+        <li>timer sync modes</li>
+        <li>spu reverb and envelopes</li>
+        <li>anything that isn't linux (x11 + alsa only)</li>
+      </ul>
+    </div>
+  </section>
+
+  <article class="card" id="latest">
+    <p class="date">october 26, 2026 &middot; latest</p>
+    <h2>it boots to the logo</h2>
+    <p>the gpu fixes paid off. the bios now gets all the way to the sony computer entertainment logo and it looks right: text in the right place, nothing cropped, and the gradient on the diamond intact. compare it with the screenshots further down.</p>
+    <figure>
+      <img src="image4.png" width="1027" height="765" alt="Emulator window showing the full Sony Computer Entertainment boot logo: dark blue SONY lettering, an orange and red gradient diamond, and COMPUTER ENTERTAINMENT below, on a grey background.">
+      <figcaption>the current build, in tv mode.</figcaption>
+    </figure>
+    <figure>
+      <video controls preload="metadata" playsinline width="1027" style="display:block;max-width:100%;height:auto;border:1px solid var(--line);border-radius:0.5rem;background:#000">
+        <source src="video1.mp4" type="video/mp4">
+        your browser doesn't support video, but you can <a href="video1.mp4">download the file</a>.
+      </video>
+      <figcaption>a recording of the current build.</figcaption>
+    </figure>
+  </article>
+
+  <article class="card" id="audio">
+    <p class="date">audio</p>
+    <h2>the chime is... a chime</h2>
+    <p>the bios plays that startup sound by uploading adpcm samples into the spu's 512 kb of sound ram over dma channel 4, then keying on a few voices. mine does all of that and you can recognise the tune. it just sounds like a midi version of it played through a sound card that's falling apart, with clipping on top. here's a 5 second capture the emulator dumps to <code>chime.wav</code> on its own:</p>
+    <div class="player">
+      <strong>chime.wav (straight out of the emulator, unfixed)</strong>
+      <audio controls preload="none" src="chime.wav">your browser doesn't support audio, but you can <a href="chime.wav">download the file</a>.</audio>
+    </div>
+    <p>i went through my spu code to figure out why. nothing here is confirmed yet, but this is my suspect list, roughly in order of how much i think each one matters:</p>
+    <ul>
+      <li><strong>no adsr envelopes.</strong> the envelope registers are ignored, so every voice is at full volume the moment it keys on and gets cut instantly on key off. that gives you harsh attacks, clicks, and notes that never fade. the real chime depends on its envelopes a lot.</li>
+      <li><strong>no interpolation.</strong> pitched voices just grab the nearest sample instead of using the gaussian interpolation the real spu does. that's a pretty direct route to the harsh, aliased, "cheap synth" sound.</li>
+      <li><strong>clipping.</strong> up to 24 voices get summed at full volume and clamped once at the end. without envelopes bringing voices down, overlapping notes slam into the limits.</li>
+      <li><strong>no reverb.</strong> the real thing washes the chime in reverb and mine is completely dry, which makes everything sound thinner and more obvious.</li>
+      <li><strong>volume sweep bit.</strong> voice volume registers can be in "sweep" mode (bit 15). i read them as plain signed numbers, so a value with that bit set turns into a big negative volume (inverted phase).</li>
+      <li><strong>spu timing.</strong> i only generate audio once per frame, 735 samples after running a whole frame of cpu. any register write that happens during the frame is effectively quantised to 16.7 ms. and if the emulator ever can't keep up with real time, the alsa buffer underruns and you get crackle.</li>
+      <li><strong>small stuff.</strong> the final adpcm block of a non-looping sample gets dropped when the end flag is hit, i clamp the shift value to 12 (i think the hardware treats 13-15 like 9, need to check), and a master volume of 0 gets treated as full volume as a hack.</li>
+    </ul>
+    <p>plan: envelopes first, then interpolation, then see how bad it still is before touching reverb.</p>
+  </article>
+
+  <article class="card" id="before">
+    <p class="date">earlier</p>
+    <h2>how it used to look (terrifying)</h2>
+    <p>before the gpu was behaving, these are the kinds of things the bios screen turned into. i'm keeping them here on purpose.</p>
+
+    <figure>
+      <img src="image1.png" width="1029" height="540" alt="Emulator window showing the full 1024 by 512 VRAM view: a large flat grey rectangle on the left and two garbled, stretched Sony Computer Entertainment logos in the top right on black.">
+      <figcaption>the full vram view (tab key). a big grey fill on the left, and the sony computer entertainment logo uploaded into vram twice with the colours and proportions all wrong.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="image2.png" width="1023" height="767" alt="Emulator window on a black background showing the top half of the red SONY lettering cut off, above an orange and red gradient PlayStation diamond that runs off the bottom of the window.">
+      <figcaption>tv mode. the gradient on the diamond already works, but the whole picture sits too low: "sony" is chopped in half and the diamond runs off the bottom of the screen.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="image3.png" width="1025" height="764" alt="Emulator window showing the red SONY lettering clipped at the bottom, above a tall stretched orange and red gradient diamond that is cropped at the bottom edge.">
+      <figcaption>same logo, different problem: now the diamond is stretched tall and still cropped, and the sony text is still cut off.</figcaption>
+    </figure>
+
+    <p>the nice part is that the shapes and the shading were already right. it was mostly the placement and cropping that was off.</p>
+  </article>
+
+  <article class="card" id="how">
+    <p class="date">how it's put together</p>
+    <h2>the guts</h2>
+
+    <h3>cpu</h3>
+    <p>it's a mips r3000a starting at <code>0xBFC00000</code>, the bios reset vector. every instruction counts as one cycle for now. it tracks both kinds of delay: the branch delay slot (the instruction after a branch always runs) and the load delay slot (a loaded value isn't visible until one instruction later), plus cop0 exceptions with sr, cause, epc and badvaddr. interrupts get checked every step by mirroring the bus's pending state into bit 10 of cause. there's a unit test that makes sure a vblank interrupt actually reaches the handler, because getting that wrong is a great way to lose a weekend.</p>
+
+    <h3>bus</h3>
+    <p>addresses get masked with <code>0x1FFFFFFF</code>, which makes kuseg, kseg0 and kseg1 all land on the same physical map without any special casing. 2 mb of ram is mirrored across the first 8 mb, the 512 kb bios sits at <code>0x1FC00000</code>, and there's a 1 kb scratchpad. anything the bios touches that i haven't mapped yet isn't silently ignored: the bus counts every unmapped read and write per address, so i can see exactly what it's poking at and what to implement next.</p>
+
+    <h3>gpu</h3>
+    <p>gp0 and gp1 command handling, fills, cpu&harr;vram transfers, vram-to-vram copies, polygons, rectangles and lines. triangles use an edge-function rasterizer with a top-left fill rule bias, and there's texture sampling through cluts, semi-transparency blending, texture modulation and the mask bit. it draws straight into a 1024x512 array of 15-bit pixels, same layout as real vram, so dma transfers and texture uploads just work. the gpu has its own unit tests (fill, flat triangle, textured quad, vram readback).</p>
+
+    <h3>gte</h3>
+    <p>the geometry coprocessor, cop2. it's all fixed-point math: 44-bit mac overflow tracking with flag bits, ir saturation, the sxy/sz/colour fifos, and the reciprocal-based divide used for perspective. two known shortcuts: commands finish instantly instead of taking real cycles, and the weird "far colour" bug in mvmva isn't reproduced.</p>
+
+    <h3>dma, timers, cd-rom</h3>
+    <p>dma channels 2 (gpu, including linked lists), 4 (spu) and 6 (ordering table clear) are implemented, and finish instantly. the dicr interrupt logic is edge-triggered so the cpu only sees a new irq when it actually rises. the three root counters free-run with their different clock sources, and sync modes aren't done. the cd-rom controller acts like a console with no disc: it answers commands with the right interrupt types and delays, reports the bios date for the test command, and answers getid with the "no disc" error. there's a comment in there saying if the bios acts weird, try different status bytes, which is the most honest comment in the codebase.</p>
+
+    <h3>no sdl</h3>
+    <p>window and audio are both done by hand. the renderer opens xlib and glx at runtime, creates an opengl 3.3 core context, and uploads vram as a texture each frame, drawn with a tiny shader that crops to the display area. tab toggles between the 4:3 tv view and the full 1024x512 vram view. audio loads <code>libasound</code> with dlopen and tries pipewire, then pulse, then default. it's linux-only because of that, which i'm fine with for now.</p>
+
+    <h3>main loop</h3>
+    <p>564,480 cpu cycles per frame (33.8688 mhz / 60), then 735 audio samples (44.1 khz / 60), then vblank, render, and sleep to hold 60 fps. the first five seconds of audio get saved as <code>chime.wav</code> so i can look at what i'm actually producing instead of trusting my ears at 2 am.</p>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>source: <a href="https://github.com/glueglop/gluestation">github.com/glueglop/gluestation</a></p>
+    <p>this emulator needs a ps1 bios file to run and i'm not hosting one. you'll have to dump your own from a console you own. nothing from sony is distributed here.</p>
+    <p>PlayStation is a trademark of Sony Interactive Entertainment. i'm not affiliated with them.</p>
+  </div>
+</footer>
+
+</body>
+</html>
