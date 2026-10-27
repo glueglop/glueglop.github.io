@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Far Cry 1 in the browser: devlog</title>
-<meta name="description" content="Notes from getting Far Cry 1 running in a browser.">
+<title>glueglop</title>
+<meta name="description" content="Getting Far Cry 1 to run in a browser, and a PS1 emulator in Rust.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root {
   --sky: #2f86d6;
@@ -19,63 +19,111 @@
   --lime: #88c433;
   --lime-dark: #5d981b;
   --font: "Nunito", "Trebuchet MS", Verdana, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--font); font-size: 1.0625rem; line-height: 1.55; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
 a { color: var(--sky-dark); text-underline-offset: 3px; }
-a:focus-visible, summary:focus-visible { outline: 3px solid #f7b733; outline-offset: 3px; }
+a:focus-visible { outline: 3px solid #f7b733; outline-offset: 3px; }
 .wrap { max-width: 52rem; margin: 0 auto; padding: 0 1.25rem; }
 
+.note {
+  background: linear-gradient(#fffbe0, #fff3b8);
+  border-bottom: 1px solid #e6d77c;
+  color: #5b4d12;
+  font-size: 0.95rem; font-weight: 600;
+  text-align: center; padding: 0.5rem 1.25rem;
+}
+
+/* glossy header bar */
 .bar {
-  background: linear-gradient(rgba(255,255,255,0.38), rgba(255,255,255,0) 52%), linear-gradient(#4aa2ec, #1f6fba);
+  background:
+    linear-gradient(rgba(255,255,255,0.38), rgba(255,255,255,0) 52%),
+    linear-gradient(#4aa2ec, #1f6fba);
   border-bottom: 1px solid var(--sky-dark);
   box-shadow: 0 2px 6px rgba(20,60,100,0.25);
 }
 .bar .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 4rem; }
+.logo {
+  display: flex; align-items: center; gap: 0.6rem;
+  color: #fff; text-decoration: none;
+  font-weight: 800; font-size: 1.75rem; letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(10,40,80,0.45);
+}
 .brand { display: flex; align-items: center; gap: 0.4rem; }
-.logo { color: #fff; text-decoration: none; font-weight: 800; font-size: 1.75rem; letter-spacing: -0.01em; text-shadow: 0 1px 2px rgba(10,40,80,0.45); }
 .beta {
   font-size: 0.7rem; font-weight: 800; color: #3d5a0e;
   background: linear-gradient(#d3ef9e, #a7d65a);
   border: 1px solid #7fae35; border-radius: 0.6rem;
   padding: 0 0.45rem; position: relative; top: -0.5rem;
 }
+.bar nav { display: flex; align-items: center; gap: 1.1rem; }
 .bar nav a { color: #fff; font-weight: 600; text-decoration: none; text-shadow: 0 1px 2px rgba(10,40,80,0.45); }
 .bar nav a:hover { text-decoration: underline; }
+.bar nav a.nav-btn {
+  font-weight: 800; font-size: 0.95rem; text-decoration: none;
+  padding: 0.35rem 0.95rem; border-radius: 0.5rem;
+  background: linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0) 52%), linear-gradient(#97d340, #5d981b);
+  border: 1px solid var(--lime-dark);
+  text-shadow: 0 1px 1px rgba(30,60,0,0.5);
+  box-shadow: 0 1px 2px rgba(30,60,0,0.3), inset 0 1px 0 rgba(255,255,255,0.45);
+}
+.bar nav a.nav-btn:hover { text-decoration: none; filter: brightness(1.06); }
+.bar nav a.nav-btn:active { box-shadow: inset 0 2px 3px rgba(30,60,0,0.35); }
+.bar nav a.nav-btn[aria-current="page"] { filter: brightness(0.95); }
 
-.intro { padding: 2.5rem 0 1.25rem; }
+.intro { padding: 2.75rem 0 1.5rem; }
 .intro h1 { font-size: clamp(1.9rem, 5vw, 2.75rem); line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 0.6rem; }
-.intro p { margin: 0 0 1.5rem; max-width: 33rem; color: var(--muted); font-size: 1.15rem; }
-.log {
-  font-family: var(--mono); font-size: 0.8125rem; line-height: 1.7;
-  margin: 0; padding: 1rem 1.25rem; color: #cfe3f5; white-space: pre; overflow-x: auto;
-  background: linear-gradient(rgba(255,255,255,0.08), rgba(255,255,255,0) 40%), #15293d;
-  border: 1px solid #0e1c2b; border-radius: 0.7rem;
-  box-shadow: 0 2px 5px rgba(20,50,80,0.3), inset 0 1px 0 rgba(255,255,255,0.12);
-}
-.log .dim { color: #86a3bd; }
-.log .ok { background: #a7d65a; color: #1f3305; padding: 0.05rem 0.4rem; font-weight: 500; border-radius: 0.25rem; }
+.intro p { margin: 0; max-width: 33rem; color: var(--muted); font-size: 1.15rem; }
 
-main { padding: 1rem 0 2rem; }
-.entry {
-  background: #fff; border: 1px solid var(--line); border-radius: 0.7rem;
-  padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+.projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1.25rem; padding: 1rem 0 3rem; }
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  padding: 1.25rem;
   box-shadow: 0 1px 0 #fff inset, 0 2px 5px rgba(40,80,120,0.12);
+  display: flex; flex-direction: column;
 }
-.entry time { font-size: 0.9rem; color: var(--muted); }
-.entry h2 { font-size: 1.5rem; line-height: 1.2; font-weight: 800; letter-spacing: -0.01em; margin: 0.1rem 0 0.8rem; }
-.entry p { margin: 0 0 1rem; max-width: 38rem; }
-.entry ul { margin: 0 0 1rem; padding-left: 1.2rem; max-width: 38rem; }
-.entry li { margin-bottom: 0.35rem; }
-code { font-family: var(--mono); font-size: 0.88em; background: #e8f1fa; border: 1px solid #d3e2f0; border-radius: 0.25rem; padding: 0.05rem 0.3rem; }
-details { margin: 0.25rem 0 0.25rem; max-width: 38rem; }
-summary { cursor: pointer; font-weight: 700; color: var(--sky-dark); }
-details pre {
-  font-family: var(--mono); font-size: 0.8rem; line-height: 1.6;
-  background: #f1f6fb; border: 1px solid var(--line); border-radius: 0.5rem;
-  padding: 0.8rem 1rem; overflow-x: auto; margin: 0.6rem 0 0;
+.top { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.75rem; }
+.tile {
+  flex: none; width: 3rem; height: 3rem; border-radius: 0.65rem;
+  display: grid; place-items: center;
+  font-weight: 800; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,0.35);
+  box-shadow: 0 1px 3px rgba(20,50,80,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
 }
+.tile.fc { background: linear-gradient(rgba(255,255,255,0.3), rgba(255,255,255,0) 50%), linear-gradient(#58b04a, #2f7d3a); }
+.tile.ps { background: linear-gradient(rgba(255,255,255,0.3), rgba(255,255,255,0) 50%), linear-gradient(#5d9be0, #2c5fa6); }
+.card h2 { margin: 0; font-size: 1.25rem; line-height: 1.2; font-weight: 800; }
+.card p { margin: 0 0 1rem; color: var(--muted); }
+.pill {
+  align-self: flex-start;
+  font-size: 0.8rem; font-weight: 600;
+  padding: 0.1rem 0.65rem; border-radius: 1rem;
+  margin-bottom: 0.9rem;
+  border: 1px solid;
+}
+.pill.live { background: #eef8dc; color: #4a7a13; border-color: #b7da7d; }
+.pill.soon { background: #eef2f6; color: #5d7083; border-color: #cfd9e2; }
+
+.btn {
+  margin-top: auto; align-self: flex-start;
+  display: inline-block; text-decoration: none;
+  font-weight: 800; font-size: 0.95rem;
+  padding: 0.5rem 1.1rem; border-radius: 0.5rem;
+  color: #fff; text-shadow: 0 1px 1px rgba(30,60,0,0.5);
+  background: linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0) 52%), linear-gradient(#97d340, #5d981b);
+  border: 1px solid var(--lime-dark);
+  box-shadow: 0 1px 2px rgba(30,60,0,0.3), inset 0 1px 0 rgba(255,255,255,0.45);
+}
+.btn:hover { filter: brightness(1.06); }
+.btn:active { box-shadow: inset 0 2px 3px rgba(30,60,0,0.35); }
 
 footer { border-top: 1px solid var(--line); padding: 1.25rem 0 2.5rem; color: var(--muted); font-size: 0.9rem; }
 footer p { margin: 0 0 0.4rem; max-width: 38rem; }
@@ -83,78 +131,53 @@ footer p { margin: 0 0 0.4rem; max-width: 38rem; }
 </head>
 <body>
 
+
 <header class="bar">
   <div class="wrap">
     <div class="brand">
-      <a class="logo" href="../">glueglop</a>
+      <a class="logo" href="index.html">glueglop</a>
       <span class="beta">beta</span>
     </div>
-    <nav aria-label="Main"><a href="../">all projects</a></nav>
+    <nav aria-label="Main"><a href="#projects">projects</a><a class="nav-btn" href="contact/index.html">contact</a></nav>
   </div>
 </header>
 
-<div class="wrap">
-  <section class="intro">
-    <h1>Far Cry 1 in the browser</h1>
-    <p>trying to get Far Cry 1 running in a browser. this is where i write down what i did.</p>
-<pre class="log" aria-label="Excerpt of the engine's startup log"><span class="dim">Network initialization
-Physics initialization
-Renderer initialization
-AI initialization
-Entity system initialization
-Initializing Animation System
-Initializing 3D Engine
-Initializing Script Bindings</span>
-<span class="ok">SUCCESS! Far Cry Core Engine initialized inside WebAssembly!</span>
-Hello from Far Cry internal Lua VM running in WebAssembly!</pre>
-  </section>
-</div>
-
 <main class="wrap">
+  <section class="intro">
+    <h1>stuff i’m working on</h1>
+    <p>i’m glueglop. "trying" to get far cry 1 running in a browser, and writing a psx emulator in rust. stuff i did goes here</p>
+  </section>
 
-  <!-- To add an entry: copy one <article class="entry"> block and put it ABOVE the newest one. -->
+  <section class="projects" id="projects" aria-label="Projects">
 
-  <article class="entry" id="2026-10-25">
-    <time datetime="2026-10-25">oct 25, 2026</time>
-    <h2>the engine boots</h2>
-    <p>the core of the engine starts up inside one WebAssembly module now, and it sits in its main loop without crashing. Lua works too. i got it to print a hello from inside the engine.</p>
-    <p>nothing draws yet though. i’m using the engine’s null renderer, which takes every draw call and shows nothing, so for now it only runs in node.</p>
-    <p><strong>working:</strong> startup, console and file system, Lua scripts, AI, entities, animation, 3D engine init, and the main loop.</p>
-    <p><strong>not yet:</strong> reading game data (every path uses backslashes), input, sound, the actual game code, and a renderer. physics, movie and networking are just switched off for now.</p>
-    <p>the original game is a pile of separate DLLs that load each other while it runs, and WebAssembly can’t do that. so each one is a static library now and everything gets linked into one file. for every module i did the same three things:</p>
-    <ul>
-      <li>build it as a static library</li>
-      <li>swap the “load the DLL, look up <code>CreateX</code>” code for a direct call to <code>CreateX</code></li>
-      <li>delete the duplicate globals each DLL kept its own copy of, like <code>GetISystem()</code></li>
-    </ul>
+    <!-- To add a project: copy one <article class="card"> block and change the text and link. -->
 
-    <details>
-      <summary>stuff the compiler didn’t like</summary>
-      <pre>-fexceptions                   engine throws C++ exceptions
--fdelayed-template-parsing     MSVC lets templates call functions declared later
-std::auto_ptr                  removed from C++17, now std::unique_ptr
-__finite()                     glibc-only, shimmed with __builtin_isfinite
-sys/io.h                       glibc-only header, skipped on wasm
-X::X() inside a constructor    MSVC accepts a no-op, clang rejects it</pre>
-    </details>
-  </article>
+    <article class="card">
+      <div class="top">
+        <span class="tile fc" aria-hidden="true">FC</span>
+        <h2>Far Cry 1 in the browser</h2>
+      </div>
+      <span class="pill live">in progress</span>
+      <p>the original cryengine, built in webassembly using emscripten and removing annoying win32 stuff. i guess jack carver hates me :/</p>
+      <a class="btn" href="farcry-wasm/index.html">read the devlog</a>
+    </article>
 
-  <article class="entry" id="up-next">
-    <h2>what’s next</h2>
-    <ul>
-      <li><strong>file paths.</strong> the engine asks for things like <code>fcdata\localized\english.pak</code> with backslashes. those need converting, and the data files have to be visible to the module.</li>
-      <li><strong>input and sound.</strong> the originals use DirectInput and FMOD, so those get SDL and either a stub or OpenAL.</li>
-      <li><strong>the game module.</strong> the biggest one still left.</li>
-      <li><strong>a real renderer.</strong> the original OpenGL path leans on NVIDIA-only extensions that WebGL doesn’t have, so this means writing a new WebGL backend.</li>
-    </ul>
-  </article>
+    <article class="card">
+      <div class="top">
+        <span class="tile ps" aria-hidden="true">PS1</span>
+        <h2>PS1 emulator</h2>
+      </div>
+      <span class="pill live">in progress</span>
+      <p>made in rust. it runs the bios and plays the startup chime. the chime sounds like a broken midi file, so that's next.</p>
+      <a class="btn" href="gluestation/index.html">read the devlog</a>
+    </article>
 
+  </section>
 </main>
 
 <footer>
   <div class="wrap">
-    <p>unofficial fan project, not affiliated with Crytek or Ubisoft. no game files are hosted here.</p>
-    <p>built on the source tree from <a href="https://github.com/ugozapad/FarCry">ugozapad/FarCry</a>.</p>
+    <p>Far Cry belongs to the property of Crytek/Ubisoft (the 2004 original i'm not porting any other ones).</p>
   </div>
 </footer>
 
